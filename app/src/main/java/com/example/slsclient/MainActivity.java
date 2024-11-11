@@ -47,9 +47,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-                String url = "http://4.213.124.227:8381/status";
+                String statusUrl = "http://4.213.124.227:8381/status";
+                String analyticsUrl = "http://4.213.124.227:8381/analytics";
 
-                JsonObjectRequest statusRequest = new JsonObjectRequest(Request.Method.GET, url, null,
+                JsonObjectRequest statusRequest = new JsonObjectRequest(Request.Method.GET, statusUrl, null,
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
@@ -70,7 +71,31 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
+                JsonObjectRequest analyticsRequest = new JsonObjectRequest(Request.Method.GET, analyticsUrl, null,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                TextView deviceStatusTextView = findViewById(R.id.lightOnDurationTextViewValue);
+                                Double duration;
+                                try {
+                                    duration = response.getDouble("totalLightUsageTimeToday");
+                                    duration = Math.floor(duration * 100) / 100;
+                                    String displayText = duration.toString() + " min";
+                                    deviceStatusTextView.setText(displayText);
+                                } catch(JSONException ex) {
+                                    Toast toast = Toast.makeText(MainActivity.this, "Unable to parse the response", Toast.LENGTH_SHORT);
+                                    toast.show();
+                                }
+                            }}, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        TextView deviceStatusTextView = findViewById(R.id.deviceStatusTextViewValue);
+                        deviceStatusTextView.setText("ERROR");
+                    }
+                });
+
                 queue.add(statusRequest);
+                queue.add(analyticsRequest);
             }
         }, 0, 5, TimeUnit.SECONDS);
     }
